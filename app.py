@@ -1,9 +1,23 @@
+# app.py
 import streamlit as st
-import pandas as pd
-import sqlite3
+import requests
+import time
 
-conn = sqlite3.connect("crypto.db")
-df = pd.read_sql("SELECT * FROM prices ORDER BY timestamp DESC LIMIT 1000", conn)
+st.title("🚀 Real-Time Crypto Dashboard")
 
-st.title("📈 Real-Time Crypto Dashboard")
-st.line_chart(df.pivot(index="timestamp", columns="coin", values="price"))
+COINS = ["bitcoin", "ethereum", "solana"]
+
+def get_prices():
+    url = f"https://api.coingecko.com/api/v3/simple/price"
+    params = {"ids": ",".join(COINS), "vs_currencies": "usd"}
+    return requests.get(url, params=params).json()
+
+# Live loop
+placeholder = st.empty()
+
+while True:
+    data = get_prices()
+    with placeholder.container():
+        for coin in COINS:
+            st.metric(coin.upper(), f"${data[coin]['usd']}")
+    time.sleep(5)  # refresh every 5 seconds
